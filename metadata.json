@@ -1,0 +1,6 @@
+{
+  "name": "Sócrates - Seminario Integrador UTN FRC",
+  "description": "Plataforma académica institucional para la gestión del Seminario Integrador de UTN FRC.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
