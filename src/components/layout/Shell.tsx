@@ -82,18 +82,6 @@ export const Shell: React.FC<{ children: React.ReactNode }> = ({ children }) => 
 
   const navItems = getNavItems();
 
-  // Obtener título de la página actual para la barra superior
-  const getPageTitle = (): string => {
-    const current = navItems.find(
-      (item) => location.pathname === item.path || location.pathname.startsWith(`${item.path}/`)
-    );
-    if (current) return current.label;
-    if (location.pathname === '/perfil') return 'Mi perfil';
-    if (location.pathname === '/estudiantes/nuevo') return 'Registrar estudiantes';
-    if (location.pathname === '/') return 'Inicio';
-    return 'Sócrates';
-  };
-
   const roleLabel = user?.is_super_admin
     ? 'Super administrador'
     : user?.role === 'professor'
@@ -237,35 +225,43 @@ export const Shell: React.FC<{ children: React.ReactNode }> = ({ children }) => 
       {/* Contenedor principal                                      */}
       {/* ========================================================= */}
       <div className="flex-1 md:pl-[264px] flex flex-col min-h-screen">
-        {/* Barra superior de 64 px con fondo blanco */}
-        <header className="h-16 bg-white border-b border-[#D6E4F7] px-4 sm:px-8 flex items-center justify-between sticky top-0 z-20 shadow-2xs">
+        {/* Barra superior de 64 px con fondo azul secundario institucional, sombreado marcado y borde de separación */}
+        <header className="h-16 bg-[#0B2A66] border-b-2 border-[#1D4ED8] px-4 sm:px-8 flex items-center justify-between sticky top-0 z-20 shadow-[0_4px_18px_rgba(11,42,102,0.22)]">
           <div className="flex items-center gap-3">
             {/* Botón hamburguesa móvil */}
             <button
               type="button"
               onClick={() => setIsMobileMenuOpen(true)}
-              className="md:hidden p-2 rounded-lg text-[#51607A] hover:bg-[#EFF6FF] hover:text-[#0F1F3D] cursor-pointer"
+              className="md:hidden p-2 rounded-lg text-[#E0F2FE] hover:bg-white/15 hover:text-white transition-colors cursor-pointer border border-white/15 shadow-2xs"
               aria-label="Abrir menú de navegación"
             >
               <Menu className="w-5 h-5" />
             </button>
 
-            <span className="text-base sm:text-lg font-semibold text-[#0B2A66]">
-              {getPageTitle()}
-            </span>
+            {/* Logo sutil en vista móvil cuando no se ve el sidebar */}
+            <div className="md:hidden flex items-center gap-2">
+              <span className="font-serif font-semibold text-base text-white tracking-tight">
+                Sócrates
+              </span>
+            </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <span className="hidden sm:inline-block text-sm font-medium text-[#51607A]">
-              {fullName}
-            </span>
+          <div className="flex items-center">
+            {/* Píldora interactiva del usuario con contorno y sombreado propio */}
             <button
               type="button"
               onClick={() => navigate('/perfil')}
-              className="rounded-full ring-2 ring-transparent hover:ring-[#BAE6FD] transition-all cursor-pointer"
-              title="Ir a mi perfil"
+              className="flex items-center gap-3 py-1.5 pl-3.5 pr-1.5 rounded-full bg-white/10 hover:bg-white/18 border border-white/20 shadow-xs transition-all cursor-pointer backdrop-blur-xs group focus:outline-none focus:ring-2 focus:ring-[#7DD3FC]"
+              title="Ver mi perfil"
             >
-              <InitialsAvatar name={fullName} size="sm" />
+              <span className="hidden sm:inline-block text-sm font-medium text-white group-hover:text-[#BAE6FD] transition-colors">
+                {fullName}
+              </span>
+              <InitialsAvatar
+                name={fullName}
+                size="sm"
+                className="bg-white text-[#0B2A66] border-white font-bold ring-2 ring-white/50 group-hover:ring-white transition-all shadow-xs"
+              />
             </button>
           </div>
         </header>
