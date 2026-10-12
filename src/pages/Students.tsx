@@ -58,13 +58,6 @@ export const Students: React.FC = () => {
     setIsLoading(true);
     setPermissionError(false);
 
-    // Nota del brief: Para un profesor común, el backend responde 403 en GET /users
-    if (user?.role === 'professor' && !user.is_super_admin) {
-      setPermissionError(true);
-      setIsLoading(false);
-      return;
-    }
-
     try {
       const res = await api.getUsers({
         role: 'student',
@@ -83,7 +76,7 @@ export const Students: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [searchQuery, offset, user, toastError]);
+  }, [searchQuery, offset, toastError]);
 
   useEffect(() => {
     fetchStudents();
@@ -145,6 +138,11 @@ export const Students: React.FC = () => {
     <div className="space-y-6">
       <PageHeader
         title="Estudiantes"
+        subtitle={
+          user?.is_super_admin
+            ? 'Padrón institucional de alumnos matriculados'
+            : 'Estudiantes matriculados en tus cursos lectivos a cargo'
+        }
         action={
           <Button
             variant="primary"

@@ -20,23 +20,36 @@ import {
   TableRow,
   TableHead,
   TableCell,
+  InitialsAvatar,
 } from '../components/ui/Table';
 import { Pagination } from '../components/ui/Pagination';
 import { EmptyState, TableSkeleton } from '../components/ui/EmptyState';
 import { useToast } from '../components/ui/Toast';
-import { Plus, MoreVertical, Eye, AlertCircle } from 'lucide-react';
+import {
+  Plus,
+  MoreVertical,
+  Eye,
+  AlertCircle,
+  Users,
+  UserPlus,
+  UserMinus,
+  CheckCircle2,
+  Info,
+} from 'lucide-react';
 
 export const Projects: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { success, error: toastError } = useToast();
 
+  const isStudent = user?.role === 'student';
+
   const [projects, setProjects] = useState<ProjectPublic[]>([]);
   const [total, setTotal] = useState(0);
   const [offset, setOffset] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Filtros
+  // Filtros (solo para profesores y superadmin)
   const [sectionYears, setSectionYears] = useState<SectionYearPublic[]>([]);
   const [sections, setSections] = useState<SectionPublic[]>([]);
   const [filterSY, setFilterSY] = useState<string>('');
@@ -44,7 +57,7 @@ export const Projects: React.FC = () => {
   const [filterSection, setFilterSection] = useState<string>('');
   const [filterPrivacy, setFilterPrivacy] = useState<ProjectPrivacy | ''>('');
 
-  // Diálogo Crear Equipos de Trabajo
+  // Diálogo Crear Equipos de Trabajo (profesores y superadmin)
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [createCourseId, setCreateCourseId] = useState<number | ''>('');
   const [quantity, setQuantity] = useState<number>(1);
@@ -52,36 +65,44 @@ export const Projects: React.FC = () => {
   const [modalError, setModalError] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
 
-  // Menú contextual
+  // Acciones de alumno (Unirse o Salirse)
+  const [joiningProject, setJoiningProject] = useState<ProjectPublic | null>(null);
+  const [leavingProject, setLeavingProject] = useState<ProjectPublic | null>(null);
+  const [isActionLoading, setIsActionLoading] = useState(false);
+
+  // Menú contextual para vista de tabla
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
 
   // Cargar metadatos para filtros
   useEffect(() => {
-    const loadFiltersData = async () => {
-      try {
-        const [syRes, sRes] = await Promise.all([
-          api.getSectionYears({ limit: 100 }),
-          api.getSections({ limit: 100 }),
-        ]);
-        setSectionYears(syRes.items);
-        setSections(sRes.items);
-      } catch {
-        // Ignorar
-      }
-    };
-    loadFiltersData();
-  }, []);
+    if (!isStudent) {
+      const loadFiltersData = async () => {
+        try {
+          const [syRes, sRes] = await Promise.all([
+            api.getSectionYears({ limit: 100 }),
+            api.getSections({ limit: 100 }),
+          ]);
+          setSectionYears(syRes.items);
+          setSections(sRes.items);
+        } catch {
+          // Ignorar
+        }
+      };
+      loadFiltersData();
+    }
+  }, [isStudent]);
 
   const fetchProjects = useCallback(async () => {
     setIsLoading(true);
     try {
+      // Para alumnos, cargamos todos los equipos de su curso lectivo (ej. 3K1 2025)
       const res = await api.getProjects({
-        id_section_year: filterSY ? Number(filterSY) : null,
-        year: filterYear ? Number(filterYear) : null,
-        id_section: filterSection ? Number(filterSection) : null,
-        privacy: filterPrivacy ? filterPrivacy : null,
-        limit: 10,
-        offset,
+        id_section_year: isStudent ? 1 : filterSY ? Number(filterSY) : null,
+        year: isStudent ? null : filterYear ? Number(filterYear) : null,
+        id_section: isStudent ? null : filterSection ? Number(filterSection) : null,
+        privacy: isStudent ? null : filterPrivacy ? filterPrivacy : null,
+        limit: isStudent ? 50 : 10,
+        offset: isStudent ? 0 : offset,
       });
       setProjects(res.items);
       setTotal(res.total);
@@ -90,16 +111,54 @@ export const Projects: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [filterSY, filterYear, filterSection, filterPrivacy, offset, toastError]);
+  }, [isStudent, filterSY, filterYear, filterSection, filterPrivacy, offset, toastError]);
 
   useEffect(() => {
     fetchProjects();
   }, [fetchProjects]);
 
-  // Comprobar si el usuario puede crear equipos de trabajo (super admin o profesor asignado)
+  // Identificar el equipo actual del alumno si pertenece a alguno
+  const myCurrentProject = isStudent
+    ? projects.find((p) =>
+        (p.members || []).some((m) => m.id_student === user?.id_user)
+      )
+    : null;
+
+  // Confirmar unirse a un equipo
+  const handleConfirmJoin = async () => {
+    if (!joiningProject || !user) return;
+    setIsActionLoading(true);
+    try {
+      await api.joinProject(joiningProject.id_project);
+      success(`Te has sumado al Equipo ${joiningProject.group_number}`);
+      setJoiningProject(null);
+      await fetchProjects();
+    } catch (err: any) {
+      toastError(err.message || 'Error al sumarse al equipo');
+    } finally {
+      setIsActionLoading(false);
+    }
+  };
+
+  // Confirmar salir del equipo
+  const handleConfirmLeave = async () => {
+    if (!leavingProject || !user) return;
+    setIsActionLoading(true);
+    try {
+      await api.leaveProject(leavingProject.id_project);
+      success(`Has salido del Equipo ${leavingProject.group_number}`);
+      setLeavingProject(null);
+      await fetchProjects();
+    } catch (err: any) {
+      toastError(err.message || 'Error al salir del equipo');
+    } finally {
+      setIsActionLoading(false);
+    }
+  };
+
+  // Permiso para crear equipos (solo profesores y super admin)
   const canCreate = user?.is_super_admin || user?.role === 'professor';
 
-  // Cursos disponibles para crear (si es profesor regular, solo donde esté asignado)
   const availableCoursesForCreate = sectionYears.filter((sy) => {
     if (user?.is_super_admin) return true;
     if (user?.role === 'professor') {
@@ -171,6 +230,285 @@ export const Projects: React.FC = () => {
     return <Badge variant={privacy}>{labels[privacy]}</Badge>;
   };
 
+  // =========================================================================
+  // VISTA PARA ROL DE ALUMNO (Tarjetas de espacios de trabajo + Integrantes)
+  // =========================================================================
+  if (isStudent) {
+    const commissionName = projects[0]?.section_name || '3K1';
+    const academicYear = projects[0]?.year || 2025;
+
+    return (
+      <div className="space-y-6">
+        <PageHeader
+          title="Equipos de trabajo"
+          subtitle={`Comisión ${commissionName} · Ciclo lectivo ${academicYear}`}
+        />
+
+        {/* Banner de estado del alumno */}
+        {myCurrentProject ? (
+          <div className="p-4 rounded-xl bg-[#EFF6FF] border border-[#BAE6FD] text-[#0B2A66] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 shadow-2xs">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-[#DCFCE7] text-[#15803D] shrink-0">
+                <CheckCircle2 className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold">
+                  Perteneces al Equipo {myCurrentProject.group_number}
+                </p>
+                <p className="text-xs text-[#51607A]">
+                  {myCurrentProject.name || 'Sin nombre asignado todavía'} · {myCurrentProject.members?.length || 1} integrante(s)
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate(`/equipos/${myCurrentProject.id_project}`)}
+              >
+                <Eye className="w-3.5 h-3.5 mr-1" />
+                Ver mi equipo
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-[#B91C1C] hover:bg-[#FEE2E2]"
+                onClick={() => setLeavingProject(myCurrentProject)}
+              >
+                <UserMinus className="w-3.5 h-3.5 mr-1" />
+                Salir del equipo
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="p-4 rounded-xl bg-[#EFF6FF] border border-[#BAE6FD] text-[#0B2A66] flex items-center gap-3 shadow-2xs">
+            <div className="p-2 rounded-lg bg-[#E0F2FE] text-[#1D4ED8] shrink-0">
+              <Info className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold">
+                Aún no te has sumado a ningún equipo de trabajo
+              </p>
+              <p className="text-xs text-[#51607A]">
+                Revisa los equipos de tu comisión disponibles a continuación y pulsa «Unirme al equipo» para incorporarte a un grupo.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Cuadrícula de tarjetas de equipos de trabajo */}
+        {isLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {Array.from({ length: 4 }).map((_, idx) => (
+              <div
+                key={idx}
+                className="h-64 rounded-xl bg-white border border-[#D6E4F7] animate-pulse p-6"
+              />
+            ))}
+          </div>
+        ) : projects.length === 0 ? (
+          <EmptyState message="No hay equipos de trabajo registrados en tu comisión." />
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {projects.map((proj) => {
+              const isMyTeam = (proj.members || []).some(
+                (m) => m.id_student === user?.id_user
+              );
+              const membersCount = proj.members?.length || 0;
+
+              return (
+                <div
+                  key={proj.id_project}
+                  className={`bg-white border rounded-xl shadow-2xs flex flex-col justify-between transition-all duration-150 ${
+                    isMyTeam
+                      ? 'border-[#1D4ED8] ring-2 ring-[#BAE6FD]'
+                      : 'border-[#D6E4F7] hover:border-[#1D4ED8]/60 hover:shadow-xs'
+                  }`}
+                >
+                  <div className="p-6">
+                    {/* Encabezado de la tarjeta */}
+                    <div className="flex items-center justify-between gap-2 mb-3">
+                      <div className="flex items-center gap-2">
+                        <span className="font-serif font-semibold text-lg text-[#0B2A66]">
+                          Equipo {proj.group_number}
+                        </span>
+                        {isMyTeam && (
+                          <span className="inline-flex items-center gap-1 text-[11px] font-semibold bg-[#DCFCE7] text-[#15803D] px-2 py-0.5 rounded-full border border-[#86EFAC]">
+                            <CheckCircle2 className="w-3 h-3" />
+                            Mi equipo
+                          </span>
+                        )}
+                      </div>
+                      {renderPrivacyBadge(proj.privacy)}
+                    </div>
+
+                    {/* Nombre del proyecto */}
+                    <div className="mb-4">
+                      {proj.name ? (
+                        <p className="text-sm font-semibold text-[#0F1F3D] line-clamp-2">
+                          {proj.name}
+                        </p>
+                      ) : (
+                        <p className="text-xs text-[#94A3B8] italic">
+                          Sin nombre de proyecto aún
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Sección de integrantes */}
+                    <div className="border-t border-[#D6E4F7]/60 pt-3">
+                      <div className="flex items-center gap-1.5 text-xs font-semibold text-[#51607A] uppercase tracking-wider mb-2.5">
+                        <Users className="w-3.5 h-3.5 text-[#1D4ED8]" />
+                        <span>Integrantes ({membersCount})</span>
+                      </div>
+
+                      {membersCount === 0 ? (
+                        <p className="text-xs text-[#94A3B8] italic py-2">
+                          Sin integrantes todavía
+                        </p>
+                      ) : (
+                        <div className="space-y-2 max-h-36 overflow-y-auto pr-1">
+                          {proj.members?.map((m) => {
+                            const isMe = m.id_student === user?.id_user;
+                            return (
+                              <div
+                                key={m.id_student}
+                                className={`flex items-center justify-between text-xs p-1.5 rounded-lg ${
+                                  isMe ? 'bg-[#EFF6FF]' : 'hover:bg-[#F5F9FF]'
+                                }`}
+                              >
+                                <div className="flex items-center gap-2 truncate">
+                                  <InitialsAvatar
+                                    name={`${m.last_name} ${m.first_name}`}
+                                    size="sm"
+                                  />
+                                  <span className={`truncate font-medium ${isMe ? 'text-[#1D4ED8]' : 'text-[#0F1F3D]'}`}>
+                                    {m.last_name}, {m.first_name} {isMe && '(Tú)'}
+                                  </span>
+                                </div>
+                                <span className="font-mono text-[#51607A] text-[11px] shrink-0 ml-1">
+                                  Leg. {m.legajo}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Pie con acciones */}
+                  <div className="p-4 bg-[#F5F9FF]/60 border-t border-[#D6E4F7] flex items-center justify-between gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => navigate(`/equipos/${proj.id_project}`)}
+                    >
+                      <Eye className="w-3.5 h-3.5 mr-1" />
+                      Detalle
+                    </Button>
+
+                    {isMyTeam ? (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-[#B91C1C] hover:bg-[#FEE2E2]"
+                        onClick={() => setLeavingProject(proj)}
+                      >
+                        <UserMinus className="w-3.5 h-3.5 mr-1" />
+                        Salir del equipo
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={() => setJoiningProject(proj)}
+                      >
+                        <UserPlus className="w-3.5 h-3.5 mr-1" />
+                        Unirme al equipo
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Modal de confirmación para UNIRSE a un equipo */}
+        <Modal
+          isOpen={Boolean(joiningProject)}
+          onClose={() => setJoiningProject(null)}
+          title={`Unirme al Equipo ${joiningProject?.group_number}`}
+        >
+          <div className="space-y-4">
+            {myCurrentProject ? (
+              <p className="text-sm text-[#0F1F3D]">
+                Actualmente perteneces al <span className="font-semibold">Equipo {myCurrentProject.group_number}</span>.
+                Al unirte al <span className="font-semibold">Equipo {joiningProject?.group_number}</span>, serás reasignado automáticamente a este nuevo grupo. ¿Deseas continuar?
+              </p>
+            ) : (
+              <p className="text-sm text-[#0F1F3D]">
+                ¿Deseas sumarte al <span className="font-semibold">Equipo {joiningProject?.group_number}</span> de la Comisión {commissionName}?
+              </p>
+            )}
+
+            <div className="flex justify-end gap-3 pt-4 border-t border-[#D6E4F7]">
+              <Button
+                variant="outline"
+                onClick={() => setJoiningProject(null)}
+                disabled={isActionLoading}
+              >
+                Cancelar
+              </Button>
+              <Button
+                variant="primary"
+                onClick={handleConfirmJoin}
+                isLoading={isActionLoading}
+              >
+                Confirmar e ingresar
+              </Button>
+            </div>
+          </div>
+        </Modal>
+
+        {/* Modal de confirmación para SALIR de un equipo */}
+        <Modal
+          isOpen={Boolean(leavingProject)}
+          onClose={() => setLeavingProject(null)}
+          title={`Salir del Equipo ${leavingProject?.group_number}`}
+        >
+          <div className="space-y-4">
+            <p className="text-sm text-[#0F1F3D]">
+              ¿Estás seguro de que deseas salir del <span className="font-semibold">Equipo {leavingProject?.group_number}</span>? Tu lugar quedará disponible para otros compañeros.
+            </p>
+
+            <div className="flex justify-end gap-3 pt-4 border-t border-[#D6E4F7]">
+              <Button
+                variant="outline"
+                onClick={() => setLeavingProject(null)}
+                disabled={isActionLoading}
+              >
+                Cancelar
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleConfirmLeave}
+                isLoading={isActionLoading}
+              >
+                Salir del equipo
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      </div>
+    );
+  }
+
+  // =========================================================================
+  // VISTA PARA ROL DE PROFESOR Y SUPER ADMINISTRADOR (Tabla administrativa)
+  // =========================================================================
   return (
     <div className="space-y-6">
       <PageHeader
@@ -340,7 +678,7 @@ export const Projects: React.FC = () => {
         </>
       )}
 
-      {/* Diálogo Crear Equipos de Trabajo */}
+      {/* Diálogo Crear Equipos de Trabajo (Administrativo) */}
       <Modal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
