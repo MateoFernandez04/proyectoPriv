@@ -62,8 +62,6 @@ export const Shell: React.FC<{ children: React.ReactNode }> = ({ children }) => 
     if (user.is_super_admin) {
       return [
         { label: 'Comisiones', path: '/comisiones', icon: Layers },
-        { label: 'Docentes', path: '/docentes', icon: UserCheck },
-        { label: 'Estudiantes', path: '/estudiantes', icon: GraduationCap },
         { label: 'Usuarios', path: '/usuarios', icon: Users },
         { label: 'Equipos de trabajo', path: '/equipos', icon: FolderKanban },
       ];

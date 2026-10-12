@@ -27,20 +27,8 @@ export const Home: React.FC = () => {
           icon: Layers,
         },
         {
-          title: 'Docentes',
-          desc: 'Registro, actualización y administración de profesores de la cátedra.',
-          path: '/docentes',
-          icon: UserCheck,
-        },
-        {
-          title: 'Estudiantes',
-          desc: 'Alta individual y masiva desde planilla Excel de los alumnos del seminario.',
-          path: '/estudiantes',
-          icon: GraduationCap,
-        },
-        {
           title: 'Usuarios',
-          desc: 'Padrón institucional de cuentas registradas con consulta y filtros de rol.',
+          desc: 'Gestión integral del padrón de docentes y estudiantes con filtros de rol, altas y modificaciones.',
           path: '/usuarios',
           icon: Users,
         },
