@@ -199,25 +199,25 @@ export const Shell: React.FC<{ children: React.ReactNode }> = ({ children }) => 
 
           {/* Menú desplegable con "Mi perfil" y "Cerrar sesión" */}
           {isUserMenuOpen && (
-            <div className="absolute bottom-20 left-4 right-4 bg-[#0B2A66] border border-[#0B2A66] rounded-xl shadow-xl p-1.5 z-50 animate-in fade-in slide-in-from-bottom-2 duration-150 backdrop-blur-md">
+            <div className="absolute bottom-20 left-4 right-4 bg-[#061A3D] border border-white/15 rounded-xl shadow-[0_12px_32px_rgba(6,26,61,0.6)] p-1.5 z-50 animate-in fade-in slide-in-from-bottom-2 duration-150 backdrop-blur-md">
               <button
                 type="button"
                 onClick={() => {
                   setIsUserMenuOpen(false);
                   navigate('/perfil');
                 }}
-                className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-white hover:bg-white/15 rounded-lg transition-colors cursor-pointer text-left"
+                className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-white hover:bg-white/12 rounded-lg transition-colors cursor-pointer text-left font-medium"
               >
                 <User className="w-4 h-4 text-[#7DD3FC]" />
                 <span>Mi perfil</span>
               </button>
-              <div className="my-1 border-t border-[#0B2A66]" />
+              <div className="my-1 border-t border-white/10" />
               <button
                 type="button"
                 onClick={handleLogout}
-                className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-[#FCA5A5] hover:bg-[#B91C1C]/30 rounded-lg transition-colors cursor-pointer text-left"
+                className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-[#FCA5A5] hover:bg-[#DC2626]/20 hover:text-white rounded-lg transition-colors cursor-pointer text-left font-medium"
               >
-                <LogOut className="w-4 h-4" />
+                <LogOut className="w-4 h-4 text-[#F87171]" />
                 <span>Cerrar sesión</span>
               </button>
             </div>
