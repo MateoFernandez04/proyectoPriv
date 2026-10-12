@@ -4,12 +4,14 @@ interface SocratesLogoProps {
   className?: string;
   size?: 'sm' | 'md' | 'lg' | 'xl';
   showText?: boolean;
+  invertText?: boolean;
 }
 
 export const SocratesLogo: React.FC<SocratesLogoProps> = ({
   className = '',
   size = 'md',
   showText = true,
+  invertText = false,
 }) => {
   const sizeMap = {
     sm: { icon: 28, text: 'text-lg' },
@@ -90,7 +92,11 @@ export const SocratesLogo: React.FC<SocratesLogoProps> = ({
       </div>
 
       {showText && (
-        <span className={`font-serif font-semibold text-[#0B2A66] tracking-tight ${dim.text}`}>
+        <span
+          className={`font-serif font-semibold tracking-tight ${dim.text} ${
+            invertText ? 'text-white' : 'text-[#0B2A66]'
+          }`}
+        >
           Sócrates
         </span>
       )}
