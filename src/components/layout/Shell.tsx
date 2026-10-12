@@ -243,10 +243,8 @@ export const Shell: React.FC<{ children: React.ReactNode }> = ({ children }) => 
             </button>
 
             {/* Logo sutil en vista móvil cuando no se ve el sidebar */}
-            <div className="md:hidden flex items-center gap-2">
-              <span className="font-serif font-semibold text-base text-white tracking-tight">
-                Sócrates
-              </span>
+            <div className="md:hidden flex items-center">
+              <SocratesLogo size="sm" showText={true} invertText={true} />
             </div>
           </div>
 
