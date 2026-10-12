@@ -35,6 +35,7 @@ import {
   UserMinus,
   CheckCircle2,
   Info,
+  ShieldCheck,
 } from 'lucide-react';
 
 export const Projects: React.FC = () => {
@@ -62,6 +63,8 @@ export const Projects: React.FC = () => {
   const [createCourseId, setCreateCourseId] = useState<number | ''>('');
   const [quantity, setQuantity] = useState<number>(1);
   const [groupNumber, setGroupNumber] = useState<number | ''>('');
+  const [minMembers, setMinMembers] = useState<number>(3);
+  const [maxMembers, setMaxMembers] = useState<number>(5);
   const [modalError, setModalError] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
 
@@ -173,6 +176,8 @@ export const Projects: React.FC = () => {
     setCreateCourseId(availableCoursesForCreate[0]?.id_section_year || '');
     setQuantity(1);
     setGroupNumber('');
+    setMinMembers(3);
+    setMaxMembers(5);
     setModalError(null);
     setIsCreateModalOpen(true);
   };
@@ -191,18 +196,32 @@ export const Projects: React.FC = () => {
       return;
     }
 
+    if (minMembers < 1) {
+      setModalError('La cantidad mínima de estudiantes debe ser al menos 1');
+      return;
+    }
+
+    if (maxMembers < minMembers) {
+      setModalError('La cantidad mínima no puede superar la cantidad máxima');
+      return;
+    }
+
     setIsCreating(true);
     try {
       if (quantity === 1) {
         await api.createProject({
           id_section_year: Number(createCourseId),
           group_number: groupNumber ? Number(groupNumber) : null,
+          min_members: minMembers,
+          max_members: maxMembers,
         });
         success('Equipo de trabajo creado');
       } else {
         await api.createProjectsBulk({
           id_section_year: Number(createCourseId),
           quantity,
+          min_members: minMembers,
+          max_members: maxMembers,
         });
         success(`${quantity} equipos de trabajo creados`);
       }
@@ -231,7 +250,7 @@ export const Projects: React.FC = () => {
   };
 
   // =========================================================================
-  // VISTA PARA ROL DE ALUMNO (Tarjetas de espacios de trabajo + Integrantes)
+  // VISTA PARA ROL DE ALUMNO (Tarjetas de espacios de trabajo + Integrantes + Cupos)
   // =========================================================================
   if (isStudent) {
     const commissionName = projects[0]?.section_name || '3K1';
@@ -252,11 +271,24 @@ export const Projects: React.FC = () => {
                 <CheckCircle2 className="w-5 h-5" />
               </div>
               <div>
-                <p className="text-sm font-semibold">
-                  Perteneces al Equipo {myCurrentProject.group_number}
-                </p>
-                <p className="text-xs text-[#51607A]">
-                  {myCurrentProject.name || 'Sin nombre asignado todavía'} · {myCurrentProject.members?.length || 1} integrante(s)
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-semibold">
+                    Perteneces al Equipo {myCurrentProject.group_number}
+                  </p>
+                  {(myCurrentProject.members?.length || 0) >= (myCurrentProject.min_members || 3) ? (
+                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold bg-[#DCFCE7] text-[#15803D] px-2 py-0.5 rounded-full border border-[#86EFAC]">
+                      <ShieldCheck className="w-3 h-3" />
+                      Grupo asegurado
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold bg-[#FEF3C7] text-[#B45309] px-2 py-0.5 rounded-full border border-[#FDE68A]">
+                      <AlertCircle className="w-3 h-3" />
+                      Falta(n) {(myCurrentProject.min_members || 3) - (myCurrentProject.members?.length || 0)} para asegurar
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-[#51607A] mt-0.5">
+                  {myCurrentProject.name || 'Sin nombre asignado todavía'} · {myCurrentProject.members?.length || 1} de {myCurrentProject.max_members || 5} integrantes (Mínimo: {myCurrentProject.min_members || 3})
                 </p>
               </div>
             </div>
@@ -316,6 +348,10 @@ export const Projects: React.FC = () => {
                 (m) => m.id_student === user?.id_user
               );
               const membersCount = proj.members?.length || 0;
+              const minLimit = proj.min_members || 3;
+              const maxLimit = proj.max_members || 5;
+              const isSecured = membersCount >= minLimit;
+              const isFull = membersCount >= maxLimit;
 
               return (
                 <div
@@ -344,7 +380,7 @@ export const Projects: React.FC = () => {
                     </div>
 
                     {/* Nombre del proyecto */}
-                    <div className="mb-4">
+                    <div className="mb-3">
                       {proj.name ? (
                         <p className="text-sm font-semibold text-[#0F1F3D] line-clamp-2">
                           {proj.name}
@@ -356,11 +392,37 @@ export const Projects: React.FC = () => {
                       )}
                     </div>
 
+                    {/* Estado de aseguramiento y cupo */}
+                    <div className="mb-4 flex flex-wrap items-center gap-2 text-xs">
+                      {isSecured ? (
+                        <span className="inline-flex items-center gap-1 font-semibold text-[#15803D] bg-[#DCFCE7] px-2 py-0.5 rounded-md border border-[#86EFAC]">
+                          <ShieldCheck className="w-3.5 h-3.5" />
+                          Grupo asegurado
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 font-medium text-[#B45309] bg-[#FEF3C7] px-2 py-0.5 rounded-md border border-[#FDE68A]">
+                          <AlertCircle className="w-3.5 h-3.5" />
+                          Faltan {minLimit - membersCount} para asegurar
+                        </span>
+                      )}
+
+                      {isFull && (
+                        <span className="font-semibold text-[#B91C1C] bg-[#FEE2E2] px-2 py-0.5 rounded-md border border-[#FCA5A5]">
+                          Cupo completo
+                        </span>
+                      )}
+                    </div>
+
                     {/* Sección de integrantes */}
                     <div className="border-t border-[#D6E4F7]/60 pt-3">
-                      <div className="flex items-center gap-1.5 text-xs font-semibold text-[#51607A] uppercase tracking-wider mb-2.5">
-                        <Users className="w-3.5 h-3.5 text-[#1D4ED8]" />
-                        <span>Integrantes ({membersCount})</span>
+                      <div className="flex items-center justify-between text-xs font-semibold text-[#51607A] uppercase tracking-wider mb-2.5">
+                        <div className="flex items-center gap-1.5">
+                          <Users className="w-3.5 h-3.5 text-[#1D4ED8]" />
+                          <span>Integrantes</span>
+                        </div>
+                        <span className="font-mono text-[#0F1F3D]">
+                          {membersCount} / {maxLimit} (mín. {minLimit})
+                        </span>
                       </div>
 
                       {membersCount === 0 ? (
@@ -419,6 +481,10 @@ export const Projects: React.FC = () => {
                         <UserMinus className="w-3.5 h-3.5 mr-1" />
                         Salir del equipo
                       </Button>
+                    ) : isFull ? (
+                      <span className="text-xs font-medium text-[#51607A] px-2 py-1 bg-[#F1F5F9] rounded-md border border-[#D6E4F7]">
+                        Cupo completo
+                      </span>
                     ) : (
                       <Button
                         variant="primary"
@@ -591,7 +657,7 @@ export const Projects: React.FC = () => {
       </div>
 
       {isLoading ? (
-        <TableSkeleton rows={4} cols={6} />
+        <TableSkeleton rows={4} cols={7} />
       ) : projects.length === 0 ? (
         <EmptyState message="No se encontraron equipos de trabajo para los criterios seleccionados." />
       ) : (
@@ -603,69 +669,94 @@ export const Projects: React.FC = () => {
                 <TableHead>Comisión</TableHead>
                 <TableHead>Año</TableHead>
                 <TableHead>Nombre del proyecto</TableHead>
+                <TableHead>Cupo / Integrantes</TableHead>
+                <TableHead>Estado</TableHead>
                 <TableHead>Privacidad</TableHead>
                 <TableHead className="w-20 text-right">Acciones</TableHead>
               </tr>
             </TableHeader>
             <tbody>
-              {projects.map((proj) => (
-                <TableRow
-                  key={proj.id_project}
-                  onClick={() => navigate(`/equipos/${proj.id_project}`)}
-                >
-                  <TableCell className="font-semibold text-[#0B2A66]">
-                    Equipo {proj.group_number}
-                  </TableCell>
-                  <TableCell className="font-medium text-[#0F1F3D]">
-                    {proj.section_name}
-                  </TableCell>
-                  <TableCell className="font-mono text-[#51607A]">
-                    {proj.year}
-                  </TableCell>
-                  <TableCell>
-                    {proj.name ? (
-                      <span className="font-medium text-[#0F1F3D]">
-                        {proj.name}
-                      </span>
-                    ) : (
-                      <span className="text-[#94A3B8] italic">
-                        Sin nombre
-                      </span>
-                    )}
-                  </TableCell>
-                  <TableCell>{renderPrivacyBadge(proj.privacy)}</TableCell>
-                  <TableCell
-                    className="text-right relative"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setOpenMenuId(
-                          openMenuId === proj.id_project ? null : proj.id_project
-                        )
-                      }
-                      className="p-1 rounded text-[#51607A] hover:text-[#0F1F3D] hover:bg-[#EFF6FF] cursor-pointer"
-                      aria-label="Opciones del equipo"
-                    >
-                      <MoreVertical className="w-4 h-4" />
-                    </button>
+              {projects.map((proj) => {
+                const membersCount = proj.members?.length || 0;
+                const minLimit = proj.min_members || 3;
+                const maxLimit = proj.max_members || 5;
+                const isSecured = membersCount >= minLimit;
 
-                    {openMenuId === proj.id_project && (
-                      <div className="absolute right-4 top-10 w-36 bg-white border border-[#D6E4F7] rounded-lg shadow-lg py-1 z-20 text-left">
-                        <button
-                          type="button"
-                          onClick={() => navigate(`/equipos/${proj.id_project}`)}
-                          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#0F1F3D] hover:bg-[#EFF6FF] cursor-pointer"
-                        >
-                          <Eye className="w-3.5 h-3.5 text-[#1D4ED8]" />
-                          <span>Ver detalle</span>
-                        </button>
-                      </div>
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))}
+                return (
+                  <TableRow
+                    key={proj.id_project}
+                    onClick={() => navigate(`/equipos/${proj.id_project}`)}
+                  >
+                    <TableCell className="font-semibold text-[#0B2A66]">
+                      Equipo {proj.group_number}
+                    </TableCell>
+                    <TableCell className="font-medium text-[#0F1F3D]">
+                      {proj.section_name}
+                    </TableCell>
+                    <TableCell className="font-mono text-[#51607A]">
+                      {proj.year}
+                    </TableCell>
+                    <TableCell>
+                      {proj.name ? (
+                        <span className="font-medium text-[#0F1F3D]">
+                          {proj.name}
+                        </span>
+                      ) : (
+                        <span className="text-[#94A3B8] italic">
+                          Sin nombre
+                        </span>
+                      )}
+                    </TableCell>
+                    <TableCell className="font-mono text-xs text-[#51607A]">
+                      <span className="font-semibold text-[#0F1F3D]">{membersCount}</span> / {maxLimit} (mín. {minLimit})
+                    </TableCell>
+                    <TableCell>
+                      {isSecured ? (
+                        <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#15803D] bg-[#DCFCE7] px-2 py-0.5 rounded-md border border-[#86EFAC]">
+                          <ShieldCheck className="w-3.5 h-3.5" />
+                          Asegurado
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-xs font-medium text-[#B45309] bg-[#FEF3C7] px-2 py-0.5 rounded-md border border-[#FDE68A]">
+                          <AlertCircle className="w-3.5 h-3.5" />
+                          Pendiente
+                        </span>
+                      )}
+                    </TableCell>
+                    <TableCell>{renderPrivacyBadge(proj.privacy)}</TableCell>
+                    <TableCell
+                      className="text-right relative"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setOpenMenuId(
+                            openMenuId === proj.id_project ? null : proj.id_project
+                          )
+                        }
+                        className="p-1 rounded text-[#51607A] hover:text-[#0F1F3D] hover:bg-[#EFF6FF] cursor-pointer"
+                        aria-label="Opciones del equipo"
+                      >
+                        <MoreVertical className="w-4 h-4" />
+                      </button>
+
+                      {openMenuId === proj.id_project && (
+                        <div className="absolute right-4 top-10 w-36 bg-white border border-[#D6E4F7] rounded-lg shadow-lg py-1 z-20 text-left">
+                          <button
+                            type="button"
+                            onClick={() => navigate(`/equipos/${proj.id_project}`)}
+                            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#0F1F3D] hover:bg-[#EFF6FF] cursor-pointer"
+                          >
+                            <Eye className="w-3.5 h-3.5 text-[#1D4ED8]" />
+                            <span>Ver detalle</span>
+                          </button>
+                        </div>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </tbody>
           </Table>
 
@@ -683,6 +774,7 @@ export const Projects: React.FC = () => {
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         title="Crear equipos de trabajo"
+        maxWidth="lg"
       >
         {modalError && (
           <div
@@ -715,7 +807,7 @@ export const Projects: React.FC = () => {
 
           <div>
             <Input
-              label="Cantidad de equipos"
+              label="Cantidad de equipos a crear"
               requiredAsterisk
               type="number"
               min={1}
@@ -743,6 +835,44 @@ export const Projects: React.FC = () => {
             </div>
           )}
 
+          {/* Configuración de cupo mínimo y máximo para asegurar el grupo */}
+          <div className="p-4 rounded-xl bg-[#EFF6FF]/60 border border-[#BAE6FD] space-y-3">
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-[#0B2A66] uppercase tracking-wider">
+              <ShieldCheck className="w-4 h-4 text-[#1D4ED8]" />
+              <span>Reglas de cupo y aseguramiento</span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <Input
+                  label="Cantidad mínima de estudiantes"
+                  requiredAsterisk
+                  type="number"
+                  min={1}
+                  value={minMembers}
+                  onChange={(e) => setMinMembers(Number(e.target.value))}
+                  disabled={isCreating}
+                  helperText="Mínimo para considerar el grupo asegurado"
+                  required
+                />
+              </div>
+
+              <div>
+                <Input
+                  label="Cantidad máxima de estudiantes"
+                  requiredAsterisk
+                  type="number"
+                  min={1}
+                  value={maxMembers}
+                  onChange={(e) => setMaxMembers(Number(e.target.value))}
+                  disabled={isCreating}
+                  helperText="Capacidad máxima admisible por equipo"
+                  required
+                />
+              </div>
+            </div>
+          </div>
+
           <div className="flex justify-end gap-3 pt-3 border-t border-[#D6E4F7]">
             <Button
               type="button"
@@ -757,7 +887,7 @@ export const Projects: React.FC = () => {
               variant="primary"
               isLoading={isCreating}
             >
-              Crear
+              Crear equipos
             </Button>
           </div>
         </form>

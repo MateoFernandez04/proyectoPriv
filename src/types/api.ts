@@ -191,11 +191,15 @@ export type ProjectPrivacy = 'public' | 'private' | 'protected';
 export interface ProjectCreate {
   id_section_year: number;
   group_number?: number | null;
+  min_members?: number | null;
+  max_members?: number | null;
 }
 
 export interface ProjectBulkCreate {
   id_section_year: number;
   quantity: number;
+  min_members?: number | null;
+  max_members?: number | null;
 }
 
 export interface ProjectPublic {
@@ -211,6 +215,9 @@ export interface ProjectPublic {
   description?: string | null;
   objective?: string | null;
   problem?: string | null;
+  min_members?: number;
+  max_members?: number;
+  is_secured?: boolean;
   members?: {
     id_student: number;
     legajo: number;

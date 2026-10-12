@@ -276,6 +276,9 @@ const initialMockDB: MockDatabase = {
       description: 'Plataforma para el seguimiento integral de la cadena bovina desde el campo hasta la comercialización frigorífica.',
       objective: 'Optimizar la recolección de eventos biológicos y el control sanitario de hacienda con lectura en tiempo real.',
       problem: 'Falta de interoperabilidad entre los pesajes en manga y el registro nacional de sanidad animal.',
+      min_members: 2,
+      max_members: 5,
+      is_secured: true,
       members: [
         { id_student: 101, legajo: 89123, first_name: 'Juan Ignacio', last_name: 'Pérez' },
         { id_student: 102, legajo: 89456, first_name: 'Valentina', last_name: 'Rossi' },
@@ -293,6 +296,9 @@ const initialMockDB: MockDatabase = {
       description: 'Algoritmo genético acoplado a un visor cartográfico para la reducción de huella de carbono en flotas municipales.',
       objective: 'Reducir los tiempos de traslado y consumo de combustible en un 18%.',
       problem: 'Recorridos estáticos con congestión en horas pico sin adaptación a llenado de contenedores.',
+      min_members: 3,
+      max_members: 5,
+      is_secured: false,
       members: [
         { id_student: 103, legajo: 90214, first_name: 'Martín', last_name: 'Gómez' },
       ],
@@ -309,6 +315,9 @@ const initialMockDB: MockDatabase = {
       description: null,
       objective: null,
       problem: null,
+      min_members: 3,
+      max_members: 5,
+      is_secured: false,
       members: [],
     },
     {
@@ -323,6 +332,9 @@ const initialMockDB: MockDatabase = {
       description: 'Gestor de convocatorias y convenios empresa-facultad para alumnos del departamento de Sistemas.',
       objective: 'Digitalizar los acuerdos marco y reportes de seguimiento bimestrales.',
       problem: 'Proceso manual y dispersión de documentación en expedientes impresos.',
+      min_members: 2,
+      max_members: 4,
+      is_secured: true,
       members: [
         { id_student: 104, legajo: 91045, first_name: 'Sofía', last_name: 'Martínez' },
         { id_student: 105, legajo: 91330, first_name: 'Lucas', last_name: 'Fernández' },
@@ -1503,6 +1515,9 @@ export const api = {
         throw err;
       }
 
+      const min_members = payload.min_members || 3;
+      const max_members = payload.max_members || 5;
+
       const newProj: ProjectPublic = {
         id_project: Date.now(),
         id_section_year: sy.id_section_year,
@@ -1515,6 +1530,9 @@ export const api = {
         description: null,
         objective: null,
         problem: null,
+        min_members,
+        max_members,
+        is_secured: false,
         members: [],
       };
       mockDB.projects.push(newProj);
@@ -1542,6 +1560,9 @@ export const api = {
         throw err;
       }
 
+      const min_members = payload.min_members || 3;
+      const max_members = payload.max_members || 5;
+
       const existingInSY = mockDB.projects.filter(
         (p) => p.id_section_year === payload.id_section_year
       );
@@ -1561,6 +1582,9 @@ export const api = {
           description: null,
           objective: null,
           problem: null,
+          min_members,
+          max_members,
+          is_secured: false,
           members: [],
         };
         mockDB.projects.push(newProj);
@@ -1608,10 +1632,18 @@ export const api = {
         throw err;
       }
 
+      const maxLimit = targetProj.max_members || 5;
+      if (targetProj.members && targetProj.members.length >= maxLimit) {
+        const err: any = new Error(`El equipo ha alcanzado el cupo máximo de ${maxLimit} integrantes`);
+        err.status = 400;
+        throw err;
+      }
+
       // Desvincular de cualquier otro equipo en el que esté actualmente
       mockDB.projects.forEach((p) => {
         if (p.members) {
           p.members = p.members.filter((m) => m.id_student !== mockDB.me.id_user);
+          p.is_secured = p.members.length >= (p.min_members || 3);
         }
       });
 
@@ -1625,6 +1657,8 @@ export const api = {
         first_name: mockDB.me.first_name,
         last_name: mockDB.me.last_name,
       });
+
+      targetProj.is_secured = targetProj.members.length >= (targetProj.min_members || 3);
 
       return { ...targetProj };
     }
@@ -1649,6 +1683,8 @@ export const api = {
           (m) => m.id_student !== mockDB.me.id_user
         );
       }
+
+      targetProj.is_secured = (targetProj.members?.length || 0) >= (targetProj.min_members || 3);
 
       return { ...targetProj };
     }

@@ -130,15 +130,24 @@ export const ProjectDetail: React.FC = () => {
       {/* Encabezado: Equipo X, comisión, año e insignia de privacidad */}
       <div className="bg-white border border-[#D6E4F7] rounded-xl p-6 shadow-xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <h1 className="font-serif font-semibold text-2xl sm:text-3xl text-[#0B2A66]">
               Equipo {project.group_number}
             </h1>
             {renderPrivacyBadge(project.privacy)}
+            {(project.members?.length || 0) >= (project.min_members || 3) ? (
+              <span className="inline-flex items-center gap-1 text-xs font-semibold bg-[#DCFCE7] text-[#15803D] px-2.5 py-0.5 rounded-full border border-[#86EFAC]">
+                Grupo asegurado
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1 text-xs font-medium bg-[#FEF3C7] text-[#B45309] px-2.5 py-0.5 rounded-full border border-[#FDE68A]">
+                Pendiente de cupo mínimo
+              </span>
+            )}
           </div>
           <div className="title-line mt-2 mb-2" />
           <p className="text-sm font-medium text-[#51607A]">
-            Comisión {project.section_name} · Ciclo lectivo {project.year}
+            Comisión {project.section_name} · Ciclo lectivo {project.year} · Cupo: {project.members?.length || 0} de {project.max_members || 5} integrantes (mínimo para asegurar: {project.min_members || 3})
           </p>
         </div>
 
