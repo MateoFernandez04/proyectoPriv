@@ -93,18 +93,18 @@ export const Shell: React.FC<{ children: React.ReactNode }> = ({ children }) => 
   return (
     <div className="min-h-screen flex bg-[#F5F9FF] text-[#0F1F3D]">
       {/* ========================================================= */}
-      {/* Sidebar de escritorio (ancho 264px, fondo azul coincidente) */}
+      {/* Sidebar de escritorio (ancho 264px, azul institucional #0B2A66) */}
       {/* ========================================================= */}
-      <aside className="hidden md:flex flex-col w-[264px] bg-[#0B2A66] border-r border-[#1E3A8A] fixed inset-y-0 left-0 z-30 select-none shadow-[4px_0_18px_rgba(11,42,102,0.18)]">
+      <aside className="hidden md:flex flex-col w-[264px] bg-[#0B2A66] border-r border-[#0B2A66] fixed inset-y-0 left-0 z-30 select-none shadow-[4px_0_18px_rgba(11,42,102,0.18)]">
         {/* Cabecera Sidebar: Logo Sócrates */}
-        <div className="h-16 px-6 flex items-center border-b border-[#1E3A8A] bg-[#0B2A66]">
+        <div className="h-16 px-6 flex items-center border-b border-[#0B2A66] bg-[#0B2A66]">
           <NavLink to="/" className="flex items-center gap-3">
             <SocratesLogo size="sm" showText={true} invertText={true} />
           </NavLink>
         </div>
 
         {/* Lista de navegación */}
-        <nav className="flex-1 px-4 py-6 space-y-1.5 overflow-y-auto">
+        <nav className="flex-1 px-4 py-6 space-y-1.5 overflow-y-auto bg-[#0B2A66]">
           {navItems.map((item) => {
             const Icon = item.icon;
             return (
@@ -127,7 +127,7 @@ export const Shell: React.FC<{ children: React.ReactNode }> = ({ children }) => 
         </nav>
 
         {/* Selector de rol para revisión rápida (útil para verificar P3, P5-P10) */}
-        <div className="px-4 py-2.5 border-t border-[#1E3A8A] bg-[#0B2A66]/90">
+        <div className="px-4 py-2.5 border-t border-[#0B2A66] bg-[#0B2A66]">
           <div className="text-[11px] font-semibold text-[#BAE6FD] uppercase tracking-wider mb-1.5 flex items-center gap-1">
             <Shield className="w-3 h-3 text-[#7DD3FC]" />
             <span>Rol en vista</span>
@@ -139,7 +139,7 @@ export const Shell: React.FC<{ children: React.ReactNode }> = ({ children }) => 
               className={`py-1 px-1.5 rounded text-center transition-colors font-medium truncate ${
                 user?.is_super_admin
                   ? 'bg-[#1D4ED8] text-white shadow-xs font-semibold'
-                  : 'bg-white/10 text-white/80 border border-white/15 hover:bg-white/20 hover:text-white'
+                  : 'bg-white/10 text-white/80 border border-transparent hover:bg-white/20 hover:text-white'
               }`}
               title="Super administrador"
             >
@@ -151,7 +151,7 @@ export const Shell: React.FC<{ children: React.ReactNode }> = ({ children }) => 
               className={`py-1 px-1.5 rounded text-center transition-colors font-medium truncate ${
                 user?.role === 'professor' && !user.is_super_admin
                   ? 'bg-[#1D4ED8] text-white shadow-xs font-semibold'
-                  : 'bg-white/10 text-white/80 border border-white/15 hover:bg-white/20 hover:text-white'
+                  : 'bg-white/10 text-white/80 border border-transparent hover:bg-white/20 hover:text-white'
               }`}
               title="Profesor regular"
             >
@@ -163,7 +163,7 @@ export const Shell: React.FC<{ children: React.ReactNode }> = ({ children }) => 
               className={`py-1 px-1.5 rounded text-center transition-colors font-medium truncate ${
                 user?.role === 'student'
                   ? 'bg-[#1D4ED8] text-white shadow-xs font-semibold'
-                  : 'bg-white/10 text-white/80 border border-white/15 hover:bg-white/20 hover:text-white'
+                  : 'bg-white/10 text-white/80 border border-transparent hover:bg-white/20 hover:text-white'
               }`}
               title="Alumno"
             >
@@ -173,7 +173,7 @@ export const Shell: React.FC<{ children: React.ReactNode }> = ({ children }) => 
         </div>
 
         {/* Pie de Sidebar: Usuario y Menú */}
-        <div className="p-3.5 border-t border-[#1E3A8A] bg-[#0B2A66] relative" ref={userMenuRef}>
+        <div className="p-3.5 border-t border-[#0B2A66] bg-[#0B2A66] relative" ref={userMenuRef}>
           <button
             type="button"
             onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
@@ -199,7 +199,7 @@ export const Shell: React.FC<{ children: React.ReactNode }> = ({ children }) => 
 
           {/* Menú desplegable con "Mi perfil" y "Cerrar sesión" */}
           {isUserMenuOpen && (
-            <div className="absolute bottom-20 left-4 right-4 bg-[#0B2A66] border border-[#1E3A8A] rounded-xl shadow-xl p-1.5 z-50 animate-in fade-in slide-in-from-bottom-2 duration-150 backdrop-blur-md">
+            <div className="absolute bottom-20 left-4 right-4 bg-[#0B2A66] border border-[#0B2A66] rounded-xl shadow-xl p-1.5 z-50 animate-in fade-in slide-in-from-bottom-2 duration-150 backdrop-blur-md">
               <button
                 type="button"
                 onClick={() => {
@@ -211,7 +211,7 @@ export const Shell: React.FC<{ children: React.ReactNode }> = ({ children }) => 
                 <User className="w-4 h-4 text-[#7DD3FC]" />
                 <span>Mi perfil</span>
               </button>
-              <div className="my-1 border-t border-[#1E3A8A]" />
+              <div className="my-1 border-t border-[#0B2A66]" />
               <button
                 type="button"
                 onClick={handleLogout}
@@ -229,14 +229,14 @@ export const Shell: React.FC<{ children: React.ReactNode }> = ({ children }) => 
       {/* Contenedor principal                                      */}
       {/* ========================================================= */}
       <div className="flex-1 md:pl-[264px] flex flex-col min-h-screen">
-        {/* Barra superior de 64 px con fondo azul secundario institucional, sombreado marcado y borde de separación */}
-        <header className="h-16 bg-[#0B2A66] border-b border-[#1E3A8A] px-4 sm:px-8 flex items-center justify-between sticky top-0 z-20 shadow-[0_4px_18px_rgba(11,42,102,0.18)]">
+        {/* Barra superior de 64 px con el azul más oscuro #061A3D y borde literal del mismo color */}
+        <header className="h-16 bg-[#061A3D] border-b border-[#061A3D] px-4 sm:px-8 flex items-center justify-between sticky top-0 z-20 shadow-[0_4px_18px_rgba(6,26,61,0.22)]">
           <div className="flex items-center gap-3">
             {/* Botón hamburguesa móvil */}
             <button
               type="button"
               onClick={() => setIsMobileMenuOpen(true)}
-              className="md:hidden p-2 rounded-lg text-[#E0F2FE] hover:bg-white/15 hover:text-white transition-colors cursor-pointer border border-white/20 shadow-2xs"
+              className="md:hidden p-2 rounded-lg text-[#E0F2FE] hover:bg-white/15 hover:text-white transition-colors cursor-pointer border border-[#061A3D] shadow-2xs"
               aria-label="Abrir menú de navegación"
             >
               <Menu className="w-5 h-5" />
@@ -251,11 +251,11 @@ export const Shell: React.FC<{ children: React.ReactNode }> = ({ children }) => 
           </div>
 
           <div className="flex items-center">
-            {/* Píldora interactiva del usuario con contorno y sombreado propio */}
+            {/* Píldora interactiva del usuario con borde del mismo color/transparente */}
             <button
               type="button"
               onClick={() => navigate('/perfil')}
-              className="flex items-center gap-3 py-1.5 pl-3.5 pr-1.5 rounded-full bg-white/10 hover:bg-white/18 border border-white/20 shadow-xs transition-all cursor-pointer backdrop-blur-xs group focus:outline-none focus:ring-2 focus:ring-[#7DD3FC]"
+              className="flex items-center gap-3 py-1.5 pl-3.5 pr-1.5 rounded-full bg-white/10 hover:bg-white/18 border border-transparent shadow-xs transition-all cursor-pointer backdrop-blur-xs group focus:outline-none focus:ring-2 focus:ring-[#7DD3FC]"
               title="Ver mi perfil"
             >
               <span className="hidden sm:inline-block text-sm font-medium text-white group-hover:text-[#BAE6FD] transition-colors">
@@ -264,7 +264,7 @@ export const Shell: React.FC<{ children: React.ReactNode }> = ({ children }) => 
               <InitialsAvatar
                 name={fullName}
                 size="sm"
-                className="bg-white text-[#0B2A66] border-white font-bold ring-2 ring-white/50 group-hover:ring-white transition-all shadow-xs"
+                className="bg-white text-[#061A3D] border-white font-bold ring-2 ring-white/50 group-hover:ring-white transition-all shadow-xs"
               />
             </button>
           </div>
@@ -282,11 +282,11 @@ export const Shell: React.FC<{ children: React.ReactNode }> = ({ children }) => 
       {isMobileMenuOpen && (
         <div className="fixed inset-0 z-50 md:hidden flex">
           <div
-            className="fixed inset-0 bg-[#0B2A66]/30 backdrop-blur-xs"
+            className="fixed inset-0 bg-[#061A3D]/40 backdrop-blur-xs"
             onClick={() => setIsMobileMenuOpen(false)}
           />
-          <div className="relative flex-1 flex flex-col max-w-xs w-full bg-[#0B2A66] border-r border-[#1E3A8A] shadow-2xl z-10 animate-in slide-in-from-left duration-200">
-            <div className="h-16 px-6 flex items-center justify-between border-b border-[#1E3A8A] bg-[#0B2A66]">
+          <div className="relative flex-1 flex flex-col max-w-xs w-full bg-[#0B2A66] border-r border-[#0B2A66] shadow-2xl z-10 animate-in slide-in-from-left duration-200">
+            <div className="h-16 px-6 flex items-center justify-between border-b border-[#0B2A66] bg-[#0B2A66]">
               <SocratesLogo size="sm" showText={true} invertText={true} />
               <button
                 type="button"
@@ -297,7 +297,7 @@ export const Shell: React.FC<{ children: React.ReactNode }> = ({ children }) => 
               </button>
             </div>
 
-            <nav className="flex-1 px-4 py-6 space-y-1.5 overflow-y-auto">
+            <nav className="flex-1 px-4 py-6 space-y-1.5 overflow-y-auto bg-[#0B2A66]">
               {navItems.map((item) => {
                 const Icon = item.icon;
                 return (
@@ -320,7 +320,7 @@ export const Shell: React.FC<{ children: React.ReactNode }> = ({ children }) => 
               })}
             </nav>
 
-            <div className="p-4 border-t border-[#1E3A8A] bg-[#0B2A66]">
+            <div className="p-4 border-t border-[#0B2A66] bg-[#0B2A66]">
               <div className="flex items-center gap-3 p-2">
                 <InitialsAvatar
                   name={fullName}
